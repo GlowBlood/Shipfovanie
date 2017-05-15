@@ -14,67 +14,81 @@ Ciphering [-c key] [-d key] inputname.txt [-o outputename.txt]
 -c cafe in.txt -o out.txt Командная строка для дешифрации: -d cafe out.txt */
 
 public class Ciphering {
+    private static String outputFileName;
     private static byte[] key;
+    private static InputStream inputStream;
+    private static File outputFile;
+
     public static void main(String[] args) {
-        if (args.length != 3 && args.length != 5) {
-            System.out.println("Incorrect input");
-            return;
-        }
-        if (args[0].equals("-c")) {
-
-        } else if (args[0].equals("-d")) {
-
-        } else {
-            System.out.println("Incorrect input\n" +
-                    "First argument must be \"-c\" or \"-d\"");
-            return;
-        }
-        int size = (args[1].length() + 1) / 2;
-        key = new byte[size];
-        long k;
+        parseArgs(args);
+        BufferedInputStream bufferedInputStream;
+        BufferedOutputStream bufferedOutputStream;
         try {
-            k = Long.parseLong(args[1], 16);
-        } catch (NumberFormatException e) {
-            System.out.println("Incorrect input\n" +
-                    "Key must be a hex value");
-            return;
-        }
-        while (k != 0) {
-            byte b = (byte)(k & 0b11111111);
-            key[--size] = b;
-            k >>>= 8;
-        }
-        File inputFile = new File(args[2]);
-        File outputFile;
-        if (args.length == 5) {
-            if (!args[3].equals("-o")) {
-                System.out.println("Incorrect input");
-                return;
-            }
-            outputFile = new File(args[4]);
-        } else {
-            outputFile = new File(args[2] + ".out");
-        }
-        FileInputStream fileInputStream;
-        FileOutputStream fileOutputStream;
-        try {
-            fileInputStream = new FileInputStream(inputFile);
-            fileOutputStream = new FileOutputStream(outputFile);
+            bufferedInputStream = new BufferedInputStream(inputStream);
+            bufferedOutputStream = new BufferedOutputStream(new FileOutputStream(outputFile));
             int i = 0;
             int b;
-            while ((b = fileInputStream.read()) >= 0) {
-                fileOutputStream.write(b ^ key[i]);
+
+            while ((b = bufferedInputStream.read()) >= 0) {
+                bufferedOutputStream.write(b ^ key[i]);
                 i++;
                 if (i == key.length) {
                     i = 0;
                 }
             }
-            fileInputStream.close();
-            fileOutputStream.close();
+            bufferedInputStream.close();
+            bufferedOutputStream.close();
         } catch (FileNotFoundException e) {
             System.out.println("File not found");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private static void parseArgs(String[] args) {
+        if (!(args.length >= 2 && args.length <= 5)) {
+            System.out.println("Incorrect input");
+            System.exit(0);
+        }
+        key = getBytesFromKey(args[0]);
+
+        boolean isFile = false;
+        if (args[1].equals("-c")) {
+            inputStream = new ByteArrayInputStream(args[2].getBytes());
+        } else {
+            isFile = true;
+            try {
+                inputStream = new FileInputStream(args[1]);
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found");
+                System.exit(0);
+            }
+        }
+
+        if (!isFile && args.length == 3) {
+            outputFileName = "out.txt";
+        } else if (isFile && args.length == 2) {
+            outputFileName = args[1] + ".out";
+        } else if ((!isFile && args.length == 5 && args[3].equals("-o")) || (isFile && args.length == 4 && args[2].equals("-o"))) {
+            outputFileName = isFile ? args[3] : args[4];
+        } else {
+            System.out.println("Incorrect input");
+            System.exit(0);
+        }
+        outputFile = new File(outputFileName);
+    }
+
+
+    private static byte[] getBytesFromKey(String keyString) {
+        if (!keyString.matches("^([0-9A-Fa-f]{2})+")) {
+            System.out.println("Incorrect input\n" +
+                    "Key must be a hex value");
+            System.exit(0);
+        }
+        byte[] bytes = new byte[keyString.length() / 2];
+        for (int i = 0; i < keyString.length() / 2; i++) {
+            bytes[i] = (byte) Integer.parseInt(keyString.substring(i * 2, i * 2 + 2), 16);
+        }
+        return bytes;
     }
 }
