@@ -1,17 +1,6 @@
-
-
 package uz.sofia;
+
 import java.io.*;
-
-/*Шифрация (-с) или дешифрация (-d) указанного файла. Выходной файл указывается как -o filename.txt,
-по умоланию имя формируется из имени входного файла сдобавлением расширения.
-Алгоритм шифрации XOR. Ключ указывается после -c или -d в шестнадцатиричной системе, длина ключа - любое целое количество байт.
-
-Вид коммандной строки:
-Ciphering [-c key] [-d key] inputname.txt [-o outputename.txt]
-
-Командная строка для шифрации:
--c cafe in.txt -o out.txt Командная строка для дешифрации: -d cafe out.txt */
 
 public class Ciphering {
     private static String outputFileName;
@@ -50,30 +39,43 @@ public class Ciphering {
             System.out.println("Incorrect input");
             System.exit(0);
         }
-        key = getBytesFromKey(args[0]);
 
-        boolean isFile = false;
-        if (args[1].equals("-c")) {
-            inputStream = new ByteArrayInputStream(args[2].getBytes());
+        if (args[0].equals("-c")) {
+            try {
+                key = args[1].getBytes("UTF-8");
+            } catch (UnsupportedEncodingException e) {
+                e.printStackTrace();
+            }
+            try {
+                inputStream = new FileInputStream(args[2]);
+            } catch (FileNotFoundException e) {
+                System.out.println("File not found");
+                System.exit(0);
+            }
+            if (args.length == 3) {
+                outputFileName = "out.txt";
+            } else if (args.length == 5 && args[3].equals("-o")) {
+                outputFileName = args[4];
+            } else {
+                System.out.println("Incorrect input");
+                System.exit(0);
+            }
         } else {
-            isFile = true;
+            key = getBytesFromKey(args[0]);
             try {
                 inputStream = new FileInputStream(args[1]);
             } catch (FileNotFoundException e) {
                 System.out.println("File not found");
                 System.exit(0);
             }
-        }
-
-        if (!isFile && args.length == 3) {
-            outputFileName = "out.txt";
-        } else if (isFile && args.length == 2) {
-            outputFileName = args[1] + ".out";
-        } else if ((!isFile && args.length == 5 && args[3].equals("-o")) || (isFile && args.length == 4 && args[2].equals("-o"))) {
-            outputFileName = isFile ? args[3] : args[4];
-        } else {
-            System.out.println("Incorrect input");
-            System.exit(0);
+            if (args.length == 2) {
+                outputFileName = "out.txt";
+            } else if (args.length == 4 && args[2].equals("-o")) {
+                outputFileName = args[3];
+            } else {
+                System.out.println("Incorrect input");
+                System.exit(0);
+            }
         }
         outputFile = new File(outputFileName);
     }
